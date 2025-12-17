@@ -4,9 +4,7 @@ import { useChainMetadata } from '../../hooks/useChainMetadata'
 import { WalletDropdown } from './WalletDropdown'
 import './ConnectWallet.css'
 
-function truncateAddress(address: string): string {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`
-}
+import { truncateAddress, classNames } from '../../lib/utils'
 
 export function ConnectWallet() {
   const { address, isConnected, chain, chainId, connector } = useAccount()
@@ -61,7 +59,7 @@ export function ConnectWallet() {
     return (
       <div className="wallet-container" ref={dropdownRef} style={{ position: 'relative' }}>
         <button
-          className={`wallet-button connected ${showDropdown ? 'active' : ''}`}
+          className={classNames('wallet-button', 'connected', showDropdown && 'active')}
           onClick={() => setShowDropdown(!showDropdown)}
           title="Click to view details"
         >

@@ -1,17 +1,8 @@
 import { useState, useEffect } from 'react'
 import './WalletDropdown.css'
 
-interface WalletDropdownProps {
-  address: string
-  chainName?: string
-  walletIcon?: string
-  onDisconnect: () => void
-  onClose: () => void
-}
-
-function truncateAddress(address: string): string {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`
-}
+import type { WalletDropdownProps } from '../../types'
+import { truncateAddress, classNames } from '../../lib/utils'
 
 export function WalletDropdown({ address, chainName, walletIcon, onDisconnect, onClose }: WalletDropdownProps) {
   const [copied, setCopied] = useState(false)
@@ -52,7 +43,7 @@ export function WalletDropdown({ address, chainName, walletIcon, onDisconnect, o
           <div className="address-row">
             <span className="dropdown-value address-text">{truncateAddress(address)}</span>
             <button 
-              className={`copy-btn ${copied ? 'success' : ''}`}
+              className={classNames('copy-btn', copied && 'success')}
               onClick={handleCopy}
               title="Copy Address"
             >
