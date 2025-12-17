@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { useChainMetadata } from '../../hooks/useChainMetadata'
+import { WalletDropdown } from './WalletDropdown'
 import './ConnectWallet.css'
 
 function truncateAddress(address: string): string {
@@ -8,34 +9,37 @@ function truncateAddress(address: string): string {
 }
 
 export function ConnectWallet() {
-  const { address, isConnected, chain, chainId } = useAccount()
+  const { address, isConnected, chain, chainId, connector } = useAccount()
   const { connectors, connect, isPending } = useConnect()
   const { disconnect } = useDisconnect()
-  const [showModal, setShowModal] = useState(false)
-  const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [showModal, setShowModal] = useState(false) // For connector selection
+  const [showDropdown, setShowDropdown] = useState(false) // For wallet details
   
-  const [copied, setCopied] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   
   const { metadata } = useChainMetadata(chainId)
+
+  // Close dropdown if clicked outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Close modals if user connects/disconnects
   useEffect(() => {
     if (isConnected) {
       setShowModal(false)
     } else {
-      setShowDetailsModal(false)
+      setShowDropdown(false)
     }
   }, [isConnected])
 
-  useEffect(() => {
-    if (copied) {
-      const timer = setTimeout(() => setCopied(false), 2000)
-      return () => clearTimeout(timer)
-    }
-  }, [copied])
-
   const handleConnect = () => {
-    // If only one connector, connect directly
     if (connectors.length === 1) {
       connect({ connector: connectors[0] })
     } else {
@@ -50,75 +54,38 @@ export function ConnectWallet() {
 
   const handleDisconnect = () => {
     disconnect()
-    setShowDetailsModal(false)
-  }
-
-  const handleCopyAddress = () => {
-    if (address) {
-      navigator.clipboard.writeText(address)
-      setCopied(true)
-    }
+    setShowDropdown(false)
   }
 
   if (isConnected && address) {
     return (
-      <>
+      <div className="wallet-container" ref={dropdownRef} style={{ position: 'relative' }}>
         <button
-          className="wallet-button connected"
-          onClick={() => setShowDetailsModal(true)}
+          className={`wallet-button connected ${showDropdown ? 'active' : ''}`}
+          onClick={() => setShowDropdown(!showDropdown)}
           title="Click to view details"
         >
-          <svg className="wallet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2z" />
-            <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
-          </svg>
+          {connector?.icon ? (
+            <img src={connector.icon} alt={connector.name} className="wallet-icon-img" />
+          ) : (
+            <svg className="wallet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2z" />
+              <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
+            </svg>
+          )}
           <span className="wallet-address">{truncateAddress(address)}</span>
         </button>
 
-        {showDetailsModal && (
-          <div className="connector-modal-overlay" onClick={() => setShowDetailsModal(false)}>
-            <div className="connector-modal details-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="connector-modal-header">
-                <h3 className="connector-modal-title">Account</h3>
-                <button className="connector-modal-close" onClick={() => setShowDetailsModal(false)}>
-                  ×
-                </button>
-              </div>
-              <div className="wallet-details">
-                <div className="detail-group">
-                  <span className="detail-label">Address</span>
-                  <div className="address-container">
-                    <span className="full-address">{truncateAddress(address)}</span>
-                    <button 
-                      className="copy-button" 
-                      onClick={handleCopyAddress}
-                      title="Copy Address"
-                    >
-                      {copied ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="copy-icon success">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="copy-icon">
-                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Network</span>
-                  <span className="detail-value">{chain?.name || metadata?.name || 'Unknown'}</span>
-                </div>
-                <button className="disconnect-button" onClick={handleDisconnect}>
-                  Disconnect Wallet
-                </button>
-              </div>
-            </div>
-          </div>
+        {showDropdown && (
+          <WalletDropdown
+            address={address}
+            chainName={chain?.name || metadata?.name}
+            walletIcon={connector?.icon}
+            onDisconnect={handleDisconnect}
+            onClose={() => setShowDropdown(false)}
+          />
         )}
-      </>
+      </div>
     )
   }
 
@@ -141,7 +108,6 @@ export function ConnectWallet() {
         <span>{isPending ? 'Connecting...' : 'Connect Wallet'}</span>
       </button>
 
-      {/* Only show modal if we have multiple connectors (unlikely with just injected, unless EIP-6963) */}
       {showModal && connectors.length > 1 && (
         <div className="connector-modal-overlay" onClick={() => setShowModal(false)}>
           <div className="connector-modal" onClick={(e) => e.stopPropagation()}>
@@ -160,9 +126,14 @@ export function ConnectWallet() {
                   disabled={isPending}
                 >
                   <span className="connector-icon">
-                   {/* Generic icon since we don't know the exact wallet type easily here without more logic, 
-                       but injected usually means browser wallet */}
-                   👝
+                    {connector.icon ? (
+                       <img src={connector.icon} alt={connector.name} style={{ width: '100%', height: '100%', borderRadius: '6px' }} />
+                    ) : (
+                  <svg className="wallet-icon" viewBox="0 0 24 24" fill="black" stroke="white" strokeWidth="2">
+                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2z" />
+                    <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
+                  </svg>
+                    )}
                   </span>
                   <span>{connector.name}</span>
                 </button>
