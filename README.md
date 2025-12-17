@@ -63,4 +63,4 @@ The owner can recover ETH or tokens accidentally sent to the contract address us
 
 ## License
 
-MIT
+[MIT](LICENSE.md)
