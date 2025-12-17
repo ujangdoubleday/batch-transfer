@@ -1,18 +1,18 @@
 import { http, createConfig } from 'wagmi'
-import { mainnet, arbitrum, base, bsc } from 'wagmi/chains'
+import { mainnet, arbitrum, base, bsc, sepolia } from 'wagmi/chains'
 import { injected } from 'wagmi/connectors'
 
+const chains = [mainnet, arbitrum, base, bsc, sepolia] as const
+
 export const config = createConfig({
-  chains: [mainnet, arbitrum, base, bsc],
+  chains,
   connectors: [
     injected(),
   ],
-  transports: {
-    [mainnet.id]: http(),
-    [arbitrum.id]: http(),
-    [base.id]: http(),
-    [bsc.id]: http(),
-  },
+  transports: chains.reduce((acc, chain) => {
+    acc[chain.id] = http()
+    return acc
+  }, {} as Record<number, ReturnType<typeof http>>),
 })
 
 declare module 'wagmi' {
