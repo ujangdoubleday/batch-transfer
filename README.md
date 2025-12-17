@@ -22,7 +22,7 @@ A secure and efficient smart contract for batch transferring ETH and ERC20 token
 Ensure you have [Foundry](https://book.getfoundry.sh/getting-started/installation) installed.
 
 ```shell
-git clone <repo_url>
+git clone git@github.com:ujangdoubleday/batch-transfer.git
 cd batch-transfer
 forge install
 ```
