@@ -2,6 +2,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { ConnectWallet } from './ConnectWallet/ConnectWallet'
 import { useState } from 'react'
+import { classNames } from '../lib/utils'
 
 export function Layout() {
   const location = useLocation()
@@ -30,13 +31,13 @@ export function Layout() {
           <nav className="nav-menu desktop-only">
             <Link 
               to="/deploy" 
-              className={`nav-link ${location.pathname === '/deploy' ? 'active' : ''}`}
+              className={classNames('nav-link', location.pathname === '/deploy' && 'active')}
             >
               Deploy
             </Link>
             <Link 
               to="/transfer" 
-              className={`nav-link ${location.pathname === '/transfer' ? 'active' : ''}`}
+              className={classNames('nav-link', location.pathname === '/transfer' && 'active')}
             >
               Transfer
             </Link>
@@ -59,14 +60,14 @@ export function Layout() {
             <nav className="mobile-nav-menu">
               <Link 
                 to="/deploy" 
-                className={`nav-link ${location.pathname === '/deploy' ? 'active' : ''}`}
+                className={classNames('nav-link', location.pathname === '/deploy' && 'active')}
                 onClick={closeMobileMenu}
               >
                 Deploy
               </Link>
               <Link 
                 to="/transfer" 
-                className={`nav-link ${location.pathname === '/transfer' ? 'active' : ''}`}
+                className={classNames('nav-link', location.pathname === '/transfer' && 'active')}
                 onClick={closeMobileMenu}
               >
                 Transfer
