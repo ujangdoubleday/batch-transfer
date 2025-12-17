@@ -1,66 +1,66 @@
-## Foundry
+# Batch Transfer
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+A secure and efficient smart contract for batch transferring ETH and ERC20 tokens. Built with Foundry.
 
-Foundry consists of:
+## Features
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- **Batch ETH Transfer**: Send ETH to multiple recipients in a single transaction.
+- **Batch ERC20 Transfer**: Two modes for token transfers:
+  - `simpleBatchTransferToken`: Direct `transferFrom` from sender to recipients (useful for non-standard tokens).
+  - `batchTransferToken`: Pulls total amount to contract first, then distributes (gas optimized).
+- **Multi-Token Transfer**: Send different tokens to different recipients in one go.
+- **Combined Transfer**: Send ETH and multiple ERC20 tokens in a single transaction.
+- **Security**:
+  - `ReentrancyGuard`: Protects against reentrancy attacks.
+  - `Ownable`: Access control for critical functions.
+  - `Pausable`: Emergency stop mechanism.
+  - `SafeERC20`: Handled non-standard ERC20 implementations.
+- **Gas Optimized**: Uses assembly for hashing and optimized loops.
 
-## Documentation
+## Installation
 
-https://book.getfoundry.sh/
+Ensure you have [Foundry](https://book.getfoundry.sh/getting-started/installation) installed.
+
+```shell
+git clone <repo_url>
+cd batch-transfer
+forge install
+```
 
 ## Usage
+
+### Test
+
+Run the comprehensive test suite:
+
+```shell
+forge test
+```
 
 ### Build
 
 ```shell
-$ forge build
-```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
+forge build
 ```
 
 ### Deploy
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
+To deploy the contract to a network:
 
 ```shell
-$ cast <subcommand>
+forge script script/BatchTransfer.s.sol --rpc-url <YOUR_RPC_URL> --private-key <YOUR_PRIVATE_KEY> --broadcast
 ```
 
-### Help
+## Contract Details
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+### `maxRecipients`
+
+To prevent out-of-gas errors, the contract enforces a maximum number of recipients per batch (default 100). The owner can adjust this limit between 1 and 500.
+
+### Emergency Functions
+
+The owner can recover ETH or tokens accidentally sent to the contract address using `emergencyWithdrawEth` and `emergencyWithdrawToken`. Note: The contract logic does not hold user funds during normal operation.
+
+## License
+
+MIT
