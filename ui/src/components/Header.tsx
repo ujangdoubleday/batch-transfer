@@ -47,10 +47,10 @@ export function Header() {
                   Deploy
                 </Link>
                 <Link 
-                  to="/transfer" 
-                  className={navLinkClass(location.pathname === '/transfer')}
+                  to="/sync" 
+                  className={navLinkClass(location.pathname === '/sync')}
                 >
-                  Transfer
+                  Sync
                 </Link>
               </nav>
             </div>
@@ -119,11 +119,11 @@ export function Header() {
                   Deploy
                 </Link>
                 <Link 
-                  to="/transfer" 
+                  to="/sync" 
                   className="text-2xl font-light tracking-tight text-white hover:text-zinc-300 transition-colors"
                   onClick={closeMobileMenu}
                 >
-                  Transfer
+                  Sync
                 </Link>
               </nav>
 
