@@ -1,4 +1,5 @@
 import { useDeploy } from '../hooks/useDeploy'
+import { WalletConnectGuard } from '../components/WalletConnectGuard'
 
 export function Deploy() {
   const { 
@@ -16,22 +17,18 @@ export function Deploy() {
   } = useDeploy()
 
   return (
-    <div className="deploy-page" style={{ padding: '0 2rem 2rem', maxWidth: '600px', margin: '0', textAlign: 'left' }}>
-      <h2 style={{ 
-          fontSize: '1.5rem', 
-          fontWeight: '600', 
-          marginBottom: '2rem',
-          color: '#fff',
-          marginTop: '0'
-      }}>
-        Deploy Batch Transfer Contract
-      </h2>
-      
-      {!isConnected ? (
-        <div className="alert-message">
-          Please connect your wallet to deploy the contract.
-        </div>
-      ) : (
+    <WalletConnectGuard>
+      <div className="deploy-page" style={{ padding: '0 2rem 2rem', maxWidth: '600px', margin: '0', textAlign: 'left' }}>
+        <h2 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: '600', 
+            marginBottom: '2rem',
+            color: '#fff',
+            marginTop: '0'
+        }}>
+          Deploy Batch Transfer Contract
+        </h2>
+        
         <div className="deploy-container">
             <div style={{ marginBottom: '30px', color: '#a1a1aa', fontSize: '0.95rem' }}>
                 <div>
@@ -86,7 +83,7 @@ export function Deploy() {
                 </div>
             )}
         </div>
-      )}
-    </div>
+      </div>
+    </WalletConnectGuard>
   )
 }
