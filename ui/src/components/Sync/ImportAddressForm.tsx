@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { isAddress } from 'viem'
 import { useAccount } from 'wagmi'
 import { useChainMetadata } from '../../hooks/useChainMetadata'
 import { useDeployments } from '../../hooks/useDeployments'
 
 export function ImportAddressForm() {
+  const navigate = useNavigate()
   const { chainId, chain } = useAccount()
   const { metadata } = useChainMetadata(chainId)
   const { addDeployment } = useDeployments()
@@ -33,6 +35,7 @@ export function ImportAddressForm() {
 
     if (success) {
         setAddressInput('')
+        navigate(`/sync/${addressInput}`)
     } else {
         setError('Address already exists or failed to save')
     }

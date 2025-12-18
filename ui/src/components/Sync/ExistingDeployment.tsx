@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { cn } from '../../lib/utils'
 import type { ExistingDeploymentProps } from '../../types'
 
@@ -15,18 +16,17 @@ export function ExistingDeployment({ address, timestamp, onSelect }: ExistingDep
   }
 
   return (
-    <div 
+    <Link 
+        to={`/sync/${address}`}
         className={cn(
             "flex items-center justify-between p-4",
             "bg-black border border-zinc-700 rounded-md",
             "transition-all duration-200",
             "cursor-pointer select-none",
             "hover:border-zinc-500 hover:bg-zinc-900/50 hover:translate-x-1",
-            "active:translate-x-0.5"
+            "active:translate-x-0.5",
+            "no-underline"
         )}
-        onClick={() => onSelect?.(address)}
-        role="button"
-        tabIndex={0}
     >
         <div className="flex flex-col gap-1 overflow-hidden flex-1">
             <div className="font-mono text-sm text-white break-all">{address}</div>
@@ -53,6 +53,6 @@ export function ExistingDeployment({ address, timestamp, onSelect }: ExistingDep
                 </svg>
             )}
         </button>
-    </div>
+    </Link>
   )
 }
