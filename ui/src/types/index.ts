@@ -55,7 +55,7 @@ export interface DeployContractCardProps {
     handleDeploy: () => void
 }
 
-export interface ExistingDeploymentAlertProps {
+export interface ExistingDeploymentProps {
   address: string
   timestamp: number
   networkName: string

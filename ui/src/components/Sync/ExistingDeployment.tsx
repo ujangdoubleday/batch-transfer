@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { cn } from '../../lib/utils'
-import type { ExistingDeploymentAlertProps } from '../../types'
+import type { ExistingDeploymentProps } from '../../types'
 
-export function ExistingDeploymentAlert({ address, timestamp, onSelect }: ExistingDeploymentAlertProps) {
+export function ExistingDeployment({ address, timestamp, onSelect }: ExistingDeploymentProps) {
   const [copied, setCopied] = useState(false)
   const date = new Date(timestamp).toLocaleDateString()
   const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
