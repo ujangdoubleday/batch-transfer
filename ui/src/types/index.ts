@@ -37,3 +37,31 @@ export interface WalletDropdownProps {
   onDisconnect: () => void
   onClose: () => void
 }
+
+export interface Deployment {
+  address: string
+  timestamp: number
+  networkName: string
+}
+
+export interface DeployContractCardProps {
+    networkName: string
+    chainId: number | undefined
+    isDeploying: boolean
+    isConfirming: boolean
+    isConfirmed: boolean
+    deployError: Error | null
+    hash: `0x${string}` | undefined
+    handleDeploy: () => void
+}
+
+export interface ExistingDeploymentAlertProps {
+  address: string
+  timestamp: number
+  networkName: string
+  onSelect?: (address: string) => void
+}
+
+export interface DeploymentListProps {
+    deployments: Deployment[]
+}
