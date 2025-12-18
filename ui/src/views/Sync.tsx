@@ -1,5 +1,5 @@
 import { WalletConnectGuard } from '../components/WalletConnectGuard'
-import { DeploymentList } from '../components/Deployments/DeploymentList'
+import { DeploymentList } from '../components/Sync/DeploymentList'
 import { ImportAddressForm } from '../components/Sync/ImportAddressForm'
 import { useDeployments } from '../hooks/useDeployments'
 import { cn } from '../lib/utils'
