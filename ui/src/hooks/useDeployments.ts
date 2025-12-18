@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAccount } from 'wagmi'
-import { useChainMetadata } from './useChainMetadata'
 import type { Deployment } from '../types'
 
 const STORAGE_KEY = 'batch_transfer_deployments_v2'
 
 export function useDeployments() {
   const { address, chainId } = useAccount()
-  const { metadata } = useChainMetadata(chainId)
   const [deployments, setDeployments] = useState<Deployment[]>([])
 
   // Load deployments
@@ -51,13 +49,6 @@ export function useDeployments() {
         if (!allDeployments[chainId][address]) {
             allDeployments[chainId][address] = []
         }
-
-        // Avoid duplicates if necessary, or just prepend
-        // For import, we might want to check if it exists? 
-        // For now, consistent with useDeploy, we prepend.
-        // But let's check for duplicates for safety in import flows?
-        // The original logic just prepended. I will stick to prepending but maybe a check would be nice later.
-        // Actually for import, we should probably check if address already exists in the list to avoid double displaying.
         
         const currentList = allDeployments[chainId][address]
         const exists = currentList.some((d: Deployment) => d.address.toLowerCase() === deployment.address.toLowerCase())

@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useDeploy } from '../hooks/useDeploy'
 import { WalletConnectGuard } from '../components/WalletConnectGuard'
 import { DeployContractCard } from '../components/Deployments/DeployContractCard'
-import { DeploymentList } from '../components/Deployments/DeploymentList'
-import { cn } from '../lib/utils'
 
 export function Deploy() {
   const { 
@@ -16,7 +14,6 @@ export function Deploy() {
     isConfirmed, 
     deployError, 
     hash,
-    deployments,
     reset
   } = useDeploy()
 
