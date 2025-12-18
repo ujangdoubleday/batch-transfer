@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useDeployments } from './useDeployments'
 import { useAccount, useEstimateGas, useDeployContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useChainMetadata } from './useChainMetadata'
