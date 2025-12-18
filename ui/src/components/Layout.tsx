@@ -22,14 +22,9 @@ export function Layout() {
     isActive && 'after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-white after:shadow-[0_0_10px_rgba(255,255,255,0.5)]'
   )
 
-  const mobileNavLinkClass = (isActive: boolean) => cn(
-    'text-3xl font-light tracking-tight transition-all duration-300 w-full text-center py-4 border-b border-white/5',
-    isActive ? 'text-white' : 'text-zinc-500 hover:text-white',
-  )
-
   return (
-    <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)] font-sans selection:bg-white/20">
-      <header className="w-full bg-[var(--bg-app)]/80 backdrop-blur-xl sticky top-0 z-50">
+    <div className="min-h-screen bg-[#000000] text-white font-sans selection:bg-white/20">
+      <header className="w-full bg-[#000000]/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo and Desktop Nav */}
@@ -66,9 +61,9 @@ export function Layout() {
                 <ConnectWallet />
               </div>
 
-              {/* Elegant Mobile Toggle */}
+              {/* Elegant Mobile Toggle - High Z-index to stay above menu */}
               <button 
-                className="md:hidden group relative w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors duration-300 backdrop-blur-sm border border-white/10"
+                className="md:hidden group relative w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors duration-300 backdrop-blur-sm border border-white/10 z-[101]"
                 onClick={toggleMobileMenu}
                 aria-label="Toggle menu"
               >
@@ -108,21 +103,11 @@ export function Layout() {
 
         {/* Side Drawer */}
         <div className={cn(
-          "absolute inset-y-0 right-0 w-[60%] sm:w-1/2 bg-[#0A0A0A]/95 backdrop-blur-xl border-l border-white/10 shadow-2xl transform transition-transform duration-300 ease-out",
-          isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          "absolute inset-y-0 w-[60%] sm:w-1/2 bg-[#0A0A0A]/95 backdrop-blur-xl border-l border-white/10 shadow-2xl transition-[right] duration-300 ease-out",
+          isMobileMenuOpen ? "right-0" : "-right-full"
         )}>
-            <div className="flex flex-col h-full p-6">
-              <div className="flex justify-end">
-                <button 
-                  onClick={closeMobileMenu}
-                  className="p-2 text-zinc-400 hover:text-white transition-colors rounded-full hover:bg-white/10"
-                >
-                  <span className="sr-only">Close menu</span>
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+            <div className="flex flex-col h-full p-6 pt-24">
+
 
               {/* Centered Navigation */}
               <nav className="flex-1 flex flex-col justify-center items-center gap-10">
