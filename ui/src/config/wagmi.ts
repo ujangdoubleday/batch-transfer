@@ -1,8 +1,9 @@
 import { http, createConfig } from 'wagmi'
-import { mainnet, arbitrum, base, bsc, sepolia } from 'wagmi/chains'
+import * as chainDefs from 'wagmi/chains'
 import { injected } from 'wagmi/connectors'
+import { type Chain } from 'wagmi/chains'
 
-const chains = [mainnet, arbitrum, base, bsc, sepolia] as const
+const chains = Object.values(chainDefs) as unknown as [Chain, ...Chain[]]
 
 export const config = createConfig({
   chains,
