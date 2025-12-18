@@ -1,80 +1,12 @@
 #root {
   max-width: 100%;
   margin: 0 auto;
-  padding: 0 1rem; /* Reduced padding to maximize width */
-  /* text-align: center; Remove this to prevent centering everything */
+  padding: 0 1rem;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0; /* Reduced padding further */
-  margin-bottom: 2rem;
-  gap: 1rem;
-  position: relative; /* For absolute mobile menu */
-  z-index: 100;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-/* Mobile Menu Toggle */
-.mobile-menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--text-primary, #fff);
-  padding: 0.5rem;
-}
-
-/* Mobile Nav Overlay */
-.mobile-nav-overlay {
-  display: none;
-}
-
+/* Mobile Nav Overlay slideDown animation maintained for usage in Layout.tsx */
 @media (max-width: 768px) {
-  .desktop-only {
-    display: none !important;
-  }
-
-  .mobile-menu-toggle {
-    display: block;
-  }
-
-  .header {
-    justify-content: space-between;
-    flex-wrap: nowrap; /* Prevent wrapping in header row */
-  }
-
-  .header-left {
-    width: auto; /* Reset width */
-  }
-
-  .mobile-nav-overlay {
-    display: block;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #000; /* Assuming dark theme background */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1rem;
-    animation: slideDown 0.3s ease-out;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  }
-
-  .mobile-nav-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    align-items: center;
-  }
+  /* Only keeping necessary media queries or animations if referenced */
 }
 
 @keyframes slideDown {
@@ -82,54 +14,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.logo {
-  /* height: 3em; Removed fixed height to allow text scaling */
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  will-change: filter;
-  transition: filter 300ms;
-}
 
-.logo-icon {
-  font-size: 2.5rem; /* Make icon large */
-}
-
-.logo-text {
-  font-size: 1.5rem; /* Increase text size */
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.logo-link {
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  align-items: center;
-}
-
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
 
 .card {
   padding: 2em;
@@ -139,35 +24,6 @@
   color: #888;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.nav-menu {
-  display: flex;
-  gap: 1rem;
-}
-
-.nav-link {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  transition: all 0.2s;
-}
-
-.nav-link:hover {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-}
-
-.nav-link.active {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-}
 
 .transfer-page {
   text-align: center;
