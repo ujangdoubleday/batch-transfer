@@ -36,7 +36,7 @@ export function useDeployments() {
   }, [chainId, address])
 
   const addDeployment = useCallback((deployment: Deployment) => {
-    if (!chainId || !address) return
+    if (!chainId || !address) return false
 
     try {
         const storedData = localStorage.getItem(STORAGE_KEY)
@@ -66,8 +66,30 @@ export function useDeployments() {
     }
   }, [chainId, address])
 
+  const removeDeployment = useCallback((deploymentAddress: string) => {
+    if (!chainId || !address) return
+
+    try {
+        const storedData = localStorage.getItem(STORAGE_KEY)
+        if (!storedData) return
+
+        const allDeployments = JSON.parse(storedData)
+        if (allDeployments[chainId] && allDeployments[chainId][address]) {
+            const currentList = allDeployments[chainId][address]
+            const newList = currentList.filter((d: Deployment) => d.address.toLowerCase() !== deploymentAddress.toLowerCase())
+            
+            allDeployments[chainId][address] = newList
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allDeployments))
+            setDeployments(newList)
+        }
+    } catch (e) {
+        console.error('Failed to remove deployment from local storage:', e)
+    }
+  }, [chainId, address])
+
   return {
     deployments,
-    addDeployment
+    addDeployment,
+    removeDeployment
   }
 }
