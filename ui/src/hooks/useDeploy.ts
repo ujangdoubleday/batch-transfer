@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useDeployments } from './useDeployments'
 import { useAccount, useEstimateGas, useDeployContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useChainMetadata } from './useChainMetadata'
 import BatchTransferContract from '../abi/BatchTransferContract.json'
@@ -19,70 +20,20 @@ export function useDeploy() {
     hash,
   })
 
-  // Local Storage Logic
-  const STORAGE_KEY = 'batch_transfer_deployments_v2'
-
-  const [deployments, setDeployments] = useState<Deployment[]>([])
-
-  // Load deployments from local storage
-  useEffect(() => {
-    if (!chainId || !address) {
-      setDeployments([])
-      return
-    }
-
-    try {
-      const storedData = localStorage.getItem(STORAGE_KEY)
-      if (storedData) {
-        const allDeployments = JSON.parse(storedData)
-        const chainDeployments = allDeployments[chainId]
-        if (chainDeployments && chainDeployments[address]) {
-            // Ensure it's an array for v2
-            if (Array.isArray(chainDeployments[address])) {
-                setDeployments(chainDeployments[address])
-            } else {
-                setDeployments([])
-            }
-            return
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load deployments from local storage:', e)
-    }
-    setDeployments([])
-  }, [chainId, address])
+  // Use shared deployments hook
+  const { deployments, addDeployment } = useDeployments()
 
   // Save deployment to local storage when confirmed
   useEffect(() => {
     if (isConfirmed && receipt?.contractAddress && chainId && address) {
-        try {
-            const storedData = localStorage.getItem(STORAGE_KEY)
-            const allDeployments = storedData ? JSON.parse(storedData) : {}
-            
-            if (!allDeployments[chainId]) {
-                allDeployments[chainId] = {}
-            }
-
-            if (!allDeployments[chainId][address]) {
-                allDeployments[chainId][address] = []
-            }
-
-            const newDeployment: Deployment = {
-                address: receipt.contractAddress,
-                timestamp: Date.now(),
-                networkName: chain?.name || metadata?.name || 'Unknown',
-            }
-
-            // Prepend new deployment
-            allDeployments[chainId][address] = [newDeployment, ...allDeployments[chainId][address]]
-
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(allDeployments))
-            setDeployments(prev => [newDeployment, ...prev])
-        } catch (e) {
-            console.error('Failed to save deployment to local storage:', e)
+        const newDeployment: Deployment = {
+            address: receipt.contractAddress,
+            timestamp: Date.now(),
+            networkName: chain?.name || metadata?.name || 'Unknown',
         }
+        addDeployment(newDeployment)
     }
-  }, [isConfirmed, receipt, chainId, address, chain, metadata])
+  }, [isConfirmed, receipt, chainId, address, chain, metadata, addDeployment])
 
   const handleDeploy = async () => {
     try {
