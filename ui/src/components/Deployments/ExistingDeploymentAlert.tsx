@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { cn } from '../../lib/utils'
 import type { ExistingDeploymentAlertProps } from '../../types'
 
 export function ExistingDeploymentAlert({ address, timestamp, onSelect }: ExistingDeploymentAlertProps) {
@@ -15,18 +16,29 @@ export function ExistingDeploymentAlert({ address, timestamp, onSelect }: Existi
 
   return (
     <div 
-        className="deployment-list-item clickable" 
+        className={cn(
+            "flex items-center justify-between p-4",
+            "bg-black border border-zinc-700 rounded-md",
+            "transition-all duration-200",
+            "cursor-pointer select-none",
+            "hover:border-zinc-500 hover:bg-zinc-900/50 hover:translate-x-1",
+            "active:translate-x-0.5"
+        )}
         onClick={() => onSelect?.(address)}
         role="button"
         tabIndex={0}
     >
-        <div className="deployment-info">
-            <div className="deployment-address">{address}</div>
-            <div className="deployment-meta">{date} {time}</div>
+        <div className="flex flex-col gap-1 overflow-hidden flex-1">
+            <div className="font-mono text-sm text-white break-all">{address}</div>
+            <div className="text-xs text-zinc-500">{date} {time}</div>
         </div>
         
         <button 
-            className="copy-btn" 
+            className={cn(
+                "bg-transparent border-none text-zinc-400 p-2 rounded-md",
+                "transition-all shrink-0 flex items-center justify-center ml-4",
+                "hover:bg-white/10 hover:text-white"
+            )}
             onClick={handleCopy}
             title="Copy Address"
         >
