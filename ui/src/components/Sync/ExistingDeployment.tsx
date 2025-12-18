@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { cn } from '../../lib/utils'
 import type { ExistingDeploymentProps } from '../../types'
 
-export function ExistingDeployment({ address, timestamp, onSelect }: ExistingDeploymentProps) {
+export function ExistingDeployment({ address, timestamp }: ExistingDeploymentProps) {
   const [copied, setCopied] = useState(false)
   const date = new Date(timestamp).toLocaleDateString()
   const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
