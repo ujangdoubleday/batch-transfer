@@ -13,7 +13,7 @@ export function ManualInput({ recipients, setRecipients, amounts, setAmounts }: 
         <textarea
           value={recipients}
           onChange={(e) => setRecipients(e.target.value)}
-          placeholder="0x123..., 0x456..."
+          placeholder="0x101010171D3E2d1f3DcAa07b7C1B89C7d5D63Fb2, 0x19191984DF6Ce7749B786b9a2BB869B4b735eC31, ..."
           className="w-full bg-zinc-900/50 border border-white/10 rounded-xl p-4 text-white placeholder-zinc-700 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all h-64 font-mono text-sm resize-none"
           required
         />
