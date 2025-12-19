@@ -1,81 +1,364 @@
-import { useState } from 'react';
+
+import { useState, useRef, useEffect } from 'react';
 import { useBatchTransfer } from '../../../hooks/useBatchTransfer';
-import { type Address, parseUnits } from 'viem';
+import { useChainMetadata } from '../../../hooks/useChainMetadata';
+import { useAccount, useWaitForTransactionReceipt } from 'wagmi';
+import { type Address, parseUnits, isAddress } from 'viem';
+import { TabSelector } from '../Common/TabSelector';
+import { FormatHelp } from '../Common/FormatHelp';
+import { FileUpload } from '../Common/FileUpload';
+import { BatchProgress } from '../Common/BatchProgress';
+import { BatchSummary } from '../Common/BatchSummary';
+import { FeedbackAlert } from '../Common/FeedbackAlert';
+import { parseMultiTokenJSON, parseMultiTokenCSV, type MultiTokenTransferData } from '../../../lib/fileParsing';
+
+// Components
+import { ManualInputMultiTokens } from './BatchTransferMultiTokens/ManualInputMultiTokens';
+import { FilePreviewMultiTokens } from './BatchTransferMultiTokens/FilePreviewMultiTokens';
+import { FormActionsMultiTokens } from './BatchTransferMultiTokens/FormActionsMultiTokens';
+
+// Reuse MultiTokenApproval from Combined (or move to Common later)
+import { MultiTokenApproval, type TokenApprovalInfo } from './BatchTransferCombined/MultiTokenApproval';
 
 interface Props {
   contractAddress: Address;
 }
 
+type TabType = 'manual' | 'upload';
+
+interface FeedbackState {
+  type: 'success' | 'error' | 'info';
+  message: string;
+  hash?: string;
+}
+
 export function BatchTransferMultiTokensForm({ contractAddress }: Props) {
-  const { write, isPending, isConfirming } = useBatchTransfer(contractAddress);
-  const [tokenAddresses, setTokenAddresses] = useState('');
+  const { chainId } = useAccount();
+  const { metadata } = useChainMetadata(chainId);
+  const { writeAsync, isPending: isWritePending, writeError, useContractRead } = useBatchTransfer(contractAddress);
+  
+  const { data: maxRecipientsData } = useContractRead('maxRecipients');
+  const maxRecipients = maxRecipientsData ? Number(maxRecipientsData) : 100;
+
+  // Form State
+  const [activeTab, setActiveTab] = useState<TabType>('manual');
+  
+  // Manual Input State
+  const [tokens, setTokens] = useState('');
   const [recipients, setRecipients] = useState('');
   const [amounts, setAmounts] = useState('');
-  // For simplicity in this demo, we might assume 18 decimals or ask user to provide raw units, 
-  // or simple input assuming all tokens are 18 decimals. 
-  // To be robust, we'll ask for raw amounts or assume 18 for now to keep UI premium but simple.
-  // A better approach for "premium" would be to fetch decimals for each token, but that requires more complex state.
-  // We will add a note about 18 decimals default.
+  const [decimals, setDecimals] = useState('18');
   
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const tokensList = tokenAddresses.split(',').map(t => t.trim());
-      const recipientList = recipients.split(',').map(r => r.trim());
-      const amountList = amounts.split(',').map(a => parseUnits(a.trim(), 18)); 
+  // File Upload State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [parsedData, setParsedData] = useState<MultiTokenTransferData[] | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
-      write('batchTransferMultiTokens', [tokensList, recipientList, amountList]);
-    } catch (err) {
-      console.error('Error preparing transaction:', err);
+  // Batch Processing State
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
+  const [totalBatches, setTotalBatches] = useState(0);
+  const [currentTxHash, setCurrentTxHash] = useState<string | undefined>(undefined);
+  const [batches, setBatches] = useState<{
+      tokens: string[], recipients: string[], amounts: bigint[]
+  }[]>([]);
+  const [executionHistory, setExecutionHistory] = useState<{batchNumber: number, txHash: string}[]>([]);
+
+  // Feedback & Approval
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [tokensToApprove, setTokensToApprove] = useState<TokenApprovalInfo[]>([]);
+  const [isAllApproved, setIsAllApproved] = useState(false);
+
+  const explorerUrl = metadata?.explorers?.[0]?.url;
+
+  const { isLoading: isWaitingReceipt, isSuccess: isReceiptSuccess } = useWaitForTransactionReceipt({
+    hash: currentTxHash as `0x${string}` | undefined,
+  });
+
+  // Calculate Approvals
+  useEffect(() => {
+     const uniqueTokensMap = new Map<string, bigint>();
+
+     const processItem = (token: string, amountStr: string) => {
+         if (!isAddress(token)) return;
+         try {
+             const amt = parseUnits(amountStr, Number(decimals));
+             const current = uniqueTokensMap.get(token) || 0n;
+             uniqueTokensMap.set(token, current + amt);
+         } catch { /* ignore invalid parse for approval check */ }
+     };
+
+     if (activeTab === 'manual') {
+         const tList = tokens.split(',').map(s => s.trim());
+         const aList = amounts.split(',').map(s => s.trim());
+         tList.forEach((t, i) => {
+             if (i < aList.length) processItem(t, aList[i]);
+         });
+     } else if (parsedData) {
+         parsedData.forEach(item => {
+             processItem(item.token, item.amount);
+         });
+     }
+
+     const tokensInfo: TokenApprovalInfo[] = [];
+     uniqueTokensMap.forEach((amount, address) => {
+         if (amount > 0n) tokensInfo.push({ address: address as Address, amount });
+     });
+
+     setTokensToApprove(tokensInfo);
+     if (tokensInfo.length === 0) setIsAllApproved(true);
+     else setIsAllApproved(false);
+
+  }, [tokens, amounts, decimals, activeTab, parsedData]);
+
+  // Batch Loop
+  useEffect(() => {
+    if (isReceiptSuccess && isProcessing && currentTxHash) {
+      const currentHistory = [...executionHistory, { batchNumber: currentBatchIndex + 1, txHash: currentTxHash }];
+      setExecutionHistory(currentHistory);
+
+      if (currentBatchIndex < totalBatches - 1) {
+        const nextIndex = currentBatchIndex + 1;
+        setCurrentBatchIndex(nextIndex);
+        
+        const processNextBatch = async () => {
+          try {
+            setCurrentTxHash(undefined);
+            const batch = batches[nextIndex];
+            const hash = await writeAsync('batchTransferMultiTokens', [
+                batch.tokens, batch.recipients, batch.amounts
+            ]);
+            setCurrentTxHash(hash);
+          } catch (err: any) {
+             console.error('Error processing batch:', err);
+             setFeedback({
+               type: 'error',
+               message: err.message || `Failed to process batch ${nextIndex + 1}`
+             });
+             setIsProcessing(false);
+          }
+        };
+        processNextBatch();
+      } else {
+        setIsProcessing(false);
+        setFeedback({
+            type: 'success',
+            message: `All ${totalBatches} batches executed successfully!`,
+            hash: currentTxHash 
+        });
+      }
+    }
+  }, [isReceiptSuccess, isProcessing, currentBatchIndex, totalBatches, batches, writeAsync, currentTxHash, executionHistory]);
+
+  useEffect(() => {
+    if (writeError) {
+      setFeedback({ type: 'error', message: writeError.message || 'Transaction failed' });
+      setIsProcessing(false);
+      const timer = setTimeout(() => setFeedback(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [writeError]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAllApproved && tokensToApprove.length > 0) return;
+
+    try {
+      let tList: string[] = [];
+      let rList: string[] = [];
+      let aList: bigint[] = [];
+
+      if (activeTab === 'manual') {
+          tList = tokens.split(',').map(s => s.trim()).filter(Boolean);
+          rList = recipients.split(',').map(s => s.trim()).filter(Boolean);
+          aList = amounts.split(',').map(s => parseUnits(s.trim(), Number(decimals)));
+          
+          if (tList.length !== rList.length || rList.length !== aList.length) {
+              throw new Error("Mismatch in input arrays length");
+          }
+      } else {
+          if (!parsedData) throw new Error("No file data");
+          parsedData.forEach(item => {
+              tList.push(item.token);
+              rList.push(item.recipient);
+              try {
+                  aList.push(parseUnits(item.amount, Number(decimals)));
+              } catch (e) {
+                  throw new Error(`Invalid amount: ${item.amount}`);
+              }
+          });
+      }
+      
+      if (tList.length === 0) throw new Error("No valid data to process");
+
+      // Batching
+      const newBatches = [];
+      for (let i = 0; i < tList.length; i += maxRecipients) {
+          const sliceC = i + maxRecipients;
+          newBatches.push({
+              tokens: tList.slice(i, sliceC),
+              recipients: rList.slice(i, sliceC),
+              amounts: aList.slice(i, sliceC)
+          });
+      }
+
+      setBatches(newBatches);
+      setTotalBatches(newBatches.length);
+      setExecutionHistory([]);
+      setCurrentBatchIndex(0);
+      setIsProcessing(true);
+
+      const firstBatch = newBatches[0];
+      const hash = await writeAsync('batchTransferMultiTokens', [
+          firstBatch.tokens, firstBatch.recipients, firstBatch.amounts
+      ]);
+      setCurrentTxHash(hash);
+
+    } catch (err: any) {
+        setFeedback({ type: 'error', message: err.message || "Failed to prepare transaction" });
+        setIsProcessing(false);
     }
   };
 
-  const isLoading = isPending || isConfirming;
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setFileName(file.name);
+      setParseError(null);
+      setParsedData(null);
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+          try {
+              const content = event.target?.result as string;
+              let data: MultiTokenTransferData[];
+              if (file.name.endsWith('.json')) {
+                  data = parseMultiTokenJSON(content);
+              } else if (file.name.endsWith('.csv')) {
+                  data = parseMultiTokenCSV(content);
+              } else {
+                  throw new Error("Unsupported format");
+              }
+              setParsedData(data);
+          } catch (err: any) {
+              setParseError(err.message);
+          }
+      };
+      reader.readAsText(file);
+  };
+
+  const handleReset = () => {
+    setTokens(''); setRecipients(''); setAmounts(''); setDecimals('18');
+    setFileName(null); setParseError(null); setParsedData(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    
+    setBatches([]); setExecutionHistory([]); setCurrentBatchIndex(0); setTotalBatches(0);
+    setCurrentTxHash(undefined); setIsProcessing(false);
+    setFeedback(null);
+    setTokensToApprove([]); setIsAllApproved(false);
+  };
+
+  const showSummary = executionHistory.length > 0 && executionHistory.length === totalBatches && !isProcessing;
+  const isLoading = isProcessing || isWritePending || isWaitingReceipt;
+  
+  const hasData = activeTab === 'manual' ? (tokens && recipients) : (parsedData && parsedData.length > 0);
+  const isButtonDisabled = isLoading || !hasData || (!isAllApproved && tokensToApprove.length > 0);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 text-yellow-200 text-xs">
-         Note: This form allows transferring different tokens to different recipients. 
-         Index 0 of Tokens goes to Index 0 of Recipients with Index 0 of Amounts.
-         Assumes 18 decimals for all tokens.
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="bg-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+         {showSummary ? (
+            <BatchSummary 
+                results={executionHistory} 
+                explorerUrl={explorerUrl}
+                onReset={handleReset}
+            />
+         ) : (
+            <>
+                <TabSelector activeTab={activeTab} onTabChange={(t) => {
+                    setActiveTab(t);
+                    setFileName(null);
+                    setParseError(null);
+                    setParsedData(null);
+                    setShowHelp(false);
+                }} />
+                
+                {feedback && (
+                    <FeedbackAlert 
+                        feedback={feedback}
+                        explorerUrl={explorerUrl}
+                        onDismiss={() => setFeedback(null)}
+                    />
+                )}
+
+                <form onSubmit={handleSubmit} className="p-8 lg:p-12 space-y-10">
+                    <div className="min-h-[300px]">
+                        {activeTab === 'manual' ? (
+                            <ManualInputMultiTokens
+                                tokens={tokens} setTokens={setTokens}
+                                recipients={recipients} setRecipients={setRecipients}
+                                amounts={amounts} setAmounts={setAmounts}
+                                decimals={decimals} setDecimals={setDecimals}
+                            />
+                        ) : (
+                            <div className="space-y-4">
+                                <FormatHelp activeTab={activeTab} showHelp={showHelp} onToggleHelp={() => setShowHelp(!showHelp)} isMultiToken={true} />
+                                {fileName && !parseError && parsedData ? (
+                                    <FilePreviewMultiTokens
+                                        fileName={fileName}
+                                        data={parsedData}
+                                        onClear={() => {
+                                            setFileName(null);
+                                            setParsedData(null);
+                                            if (fileInputRef.current) fileInputRef.current.value = '';
+                                        }}
+                                        decimals={decimals}
+                                        onDecimalsChange={setDecimals}
+                                    />
+                                ) : (
+                                    <FileUpload
+                                        fileName={fileName}
+                                        parseError={parseError}
+                                        recipients={parsedData ? `${parsedData.length} transfers` : ''}
+                                        fileInputRef={fileInputRef}
+                                        onFileUpload={handleFileUpload}
+                                        onTriggerUpload={() => fileInputRef.current?.click()}
+                                        onChangeFile={() => fileInputRef.current?.click()}
+                                    />
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    
+                    {tokensToApprove.length > 0 && (
+                        <MultiTokenApproval 
+                            tokens={tokensToApprove}
+                            spenderAddress={contractAddress}
+                            onAllApproved={() => setIsAllApproved(true)}
+                        />
+                    )}
+
+                    {!isProcessing ? (
+                         <FormActionsMultiTokens
+                            isWaitingReceipt={isWaitingReceipt}
+                            isDisabled={isButtonDisabled}
+                            count={activeTab === 'manual' ? (recipients ? recipients.split(',').length : 0) : (parsedData?.length || 0)}
+                         />
+                    ) : (
+                        <BatchProgress 
+                            currentBatch={currentBatchIndex + 1}
+                            totalBatches={totalBatches}
+                            isConfirming={isWaitingReceipt}
+                            txHash={currentTxHash}
+                            explorerUrl={explorerUrl}
+                        />
+                    )}
+                </form>
+            </>
+         )}
       </div>
-      <div>
-        <label className="block text-sm font-medium text-zinc-400 mb-1">Token Addresses (comma separated)</label>
-        <textarea
-          value={tokenAddresses}
-          onChange={(e) => setTokenAddresses(e.target.value)}
-          placeholder="0xTokenA..., 0xTokenB..."
-          className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-white transition-colors h-24 font-mono text-sm"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-zinc-400 mb-1">Recipients (comma separated)</label>
-        <textarea
-          value={recipients}
-          onChange={(e) => setRecipients(e.target.value)}
-          placeholder="0xUserA..., 0xUserB..."
-          className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-white transition-colors h-24 font-mono text-sm"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-zinc-400 mb-1">Amounts (comma separated)</label>
-        <textarea
-          value={amounts}
-          onChange={(e) => setAmounts(e.target.value)}
-          placeholder="10, 20..."
-          className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500 transition-colors h-24 font-mono text-sm"
-          required
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-white hover:bg-zinc-200 text-black font-semibold py-3 px-4 rounded-lg transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isLoading ? 'Processing...' : 'Batch Transfer Multi Tokens'}
-      </button>
-    </form>
+    </div>
   );
 }
