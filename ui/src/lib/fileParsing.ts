@@ -134,3 +134,71 @@ export const parseCombinedCSV = (content: string): CombinedTransferData => {
 
     return { tokens, eth };
 };
+
+export interface MultiTokenTransferData {
+    token: string;
+    recipient: string;
+    amount: string;
+}
+
+export const parseMultiTokenJSON = (content: string): MultiTokenTransferData[] => {
+    let data;
+    try {
+        data = JSON.parse(content);
+    } catch (e) {
+        throw new Error("Invalid JSON format");
+    }
+
+    if (!Array.isArray(data)) throw new Error("JSON must be an array");
+    
+    const results: MultiTokenTransferData[] = [];
+    data.forEach((item: any) => {
+        if (item.token && item.recipient && item.amount) {
+            results.push({
+                token: item.token.trim(),
+                recipient: item.recipient.trim(),
+                amount: item.amount.toString().trim()
+            });
+        } else {
+             // Optional: Log which item failed?
+             // console.warn(`Item at index ${index} missing keys:`, item);
+        }
+    });
+    
+    if (results.length === 0) {
+        // Check first item to give hint
+        if (data.length > 0) {
+            const keys = Object.keys(data[0]).join(', ');
+            throw new Error(`No valid data found. Expected keys: "token", "recipient", "amount". Found: ${keys}`);
+        }
+        throw new Error("No valid data found. JSON array is empty or objects are missing required keys (token, recipient, amount).");
+    }
+    return results;
+};
+
+export const parseMultiTokenCSV = (content: string): MultiTokenTransferData[] => {
+    const lines = content.split('\n');
+    const results: MultiTokenTransferData[] = [];
+    
+    // Header check
+    const startIndex = lines[0].toLowerCase().includes('token') ? 1 : 0;
+    
+    for (let i = startIndex; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const parts = line.split(',').map(p => p.trim());
+        if (parts.length >= 3) {
+            const token = parts[0];
+            const recipient = parts[1];
+            const amount = parts[2];
+            
+            if (token && recipient && amount) {
+                results.push({ token, recipient, amount });
+            }
+        }
+    }
+    
+    if (results.length === 0) throw new Error("No valid data found in CSV");
+    return results;
+};
