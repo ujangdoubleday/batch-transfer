@@ -13,6 +13,7 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
  * @author https://github.com/ujangdoubleday
  * @notice Contract for efficient batch transfers of ETH and ERC20 tokens
  * @dev Implements ReentrancyGuard, Ownable, and Pausable for maximum security
+ *      Gas optimizations: Custom Errors, Unchecked Loops
  * 
  * Features:
  * - Batch transfer ETH to multiple recipients
@@ -33,6 +34,22 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
     using SafeERC20 for IERC20;
     using Address for address;
+
+    /*//////////////////////////////////////////////////////////////
+                            CUSTOM ERRORS
+    //////////////////////////////////////////////////////////////*/
+
+    error InvalidMaxRecipients();
+    error EmptyRecipients();
+    error LengthMismatch();
+    error TooManyRecipients();
+    error ZeroRecipient();
+    error ZeroAmount();
+    error ZeroTokenAddress();
+    error IncorrectMsgValue();
+    error TokenArraysMismatch();
+    error EthArraysMismatch();
+    error EmptyArrays();
 
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
@@ -139,7 +156,7 @@ contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
      * - _maxRecipients must be > 0 and <= 500
      */
     function setMaxRecipients(uint256 _maxRecipients) external onlyOwner {
-        require(_maxRecipients > 0 && _maxRecipients <= 500, "Invalid max recipients");
+        if (_maxRecipients == 0 || _maxRecipients > 500) revert InvalidMaxRecipients();
         uint256 oldValue = maxRecipients;
         maxRecipients = _maxRecipients;
         emit MaxRecipientsUpdated(oldValue, _maxRecipients);
@@ -202,21 +219,22 @@ contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
         address[] calldata recipients, 
         uint256[] calldata amounts
     ) external payable nonReentrant whenNotPaused {
-        require(recipients.length > 0, "Empty recipients");
-        require(recipients.length == amounts.length, "Length mismatch");
-        require(recipients.length <= maxRecipients, "Too many recipients");
+        if (recipients.length == 0) revert EmptyRecipients();
+        if (recipients.length != amounts.length) revert LengthMismatch();
+        if (recipients.length > maxRecipients) revert TooManyRecipients();
 
         uint256 total = 0;
-        for (uint256 i = 0; i < amounts.length; ++i) {
-            require(recipients[i] != address(0), "Zero recipient");
-            require(amounts[i] > 0, "Zero amount");
+        for (uint256 i = 0; i < amounts.length;) {
+            if (recipients[i] == address(0)) revert ZeroRecipient();
+            if (amounts[i] == 0) revert ZeroAmount();
             total += amounts[i];
+            unchecked { ++i; }
         }
-        require(msg.value == total, "Incorrect msg.value");
+        if (msg.value != total) revert IncorrectMsgValue();
 
-        // Transfer ETH safely using Address library
-        for (uint256 i = 0; i < recipients.length; ++i) {
+        for (uint256 i = 0; i < recipients.length;) {
             Address.sendValue(payable(recipients[i]), amounts[i]);
+            unchecked { ++i; }
         }
 
         bytes32 batchHash = _computeHash(
@@ -263,27 +281,25 @@ contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
         address[] calldata recipients,
         uint256[] calldata amounts
     ) external nonReentrant whenNotPaused {
-        require(tokenAddress != address(0), "Zero token address");
-        require(recipients.length > 0, "Empty recipients");
-        require(recipients.length == amounts.length, "Length mismatch");
-        require(recipients.length <= maxRecipients, "Too many recipients");
+        if (tokenAddress == address(0)) revert ZeroTokenAddress();
+        if (recipients.length == 0) revert EmptyRecipients();
+        if (recipients.length != amounts.length) revert LengthMismatch();
+        if (recipients.length > maxRecipients) revert TooManyRecipients();
 
         IERC20 token = IERC20(tokenAddress);
 
-        for (uint256 i = 0; i < recipients.length; ++i) {
-            require(recipients[i] != address(0), "Zero recipient");
-            require(amounts[i] > 0, "Zero amount");
+        uint256 total = 0;
+        for (uint256 i = 0; i < recipients.length;) {
+            if (recipients[i] == address(0)) revert ZeroRecipient();
+            if (amounts[i] == 0) revert ZeroAmount();
             token.safeTransferFrom(msg.sender, recipients[i], amounts[i]);
+            total += amounts[i];
+            unchecked { ++i; }
         }
 
         bytes32 batchHash = _computeHash(
             abi.encodePacked(msg.sender, tokenAddress, recipients, amounts, block.number, block.timestamp)
         );
-        
-        uint256 total = 0;
-        for (uint256 i = 0; i < amounts.length; ++i) {
-            total += amounts[i];
-        }
         
         emit BatchTransferToken(msg.sender, tokenAddress, total, recipients.length, batchHash);
     }
@@ -320,26 +336,26 @@ contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
         address[] calldata recipients,
         uint256[] calldata amounts
     ) external nonReentrant whenNotPaused {
-        require(tokenAddress != address(0), "Zero token address");
-        require(recipients.length > 0, "Empty recipients");
-        require(recipients.length == amounts.length, "Length mismatch");
-        require(recipients.length <= maxRecipients, "Too many recipients");
+        if (tokenAddress == address(0)) revert ZeroTokenAddress();
+        if (recipients.length == 0) revert EmptyRecipients();
+        if (recipients.length != amounts.length) revert LengthMismatch();
+        if (recipients.length > maxRecipients) revert TooManyRecipients();
 
         IERC20 token = IERC20(tokenAddress);
 
         uint256 total = 0;
-        for (uint256 i = 0; i < amounts.length; ++i) {
-            require(recipients[i] != address(0), "Zero recipient");
-            require(amounts[i] > 0, "Zero amount");
+        for (uint256 i = 0; i < amounts.length;) {
+            if (recipients[i] == address(0)) revert ZeroRecipient();
+            if (amounts[i] == 0) revert ZeroAmount();
             total += amounts[i];
+            unchecked { ++i; }
         }
 
-        // Pull total into contract (caller must approve total)
         token.safeTransferFrom(msg.sender, address(this), total);
 
-        // Distribute
-        for (uint256 i = 0; i < recipients.length; ++i) {
+        for (uint256 i = 0; i < recipients.length;) {
             token.safeTransfer(recipients[i], amounts[i]);
+            unchecked { ++i; }
         }
 
         bytes32 batchHash = _computeHash(
@@ -387,24 +403,21 @@ contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
         address[] calldata recipients,
         uint256[] calldata amounts
     ) external nonReentrant whenNotPaused {
-        require(tokenAddresses.length > 0, "Empty arrays");
-        require(
-            tokenAddresses.length == recipients.length && 
-            recipients.length == amounts.length,
-            "Length mismatch"
-        );
-        require(tokenAddresses.length <= maxRecipients, "Too many items");
+        if (tokenAddresses.length == 0) revert EmptyArrays();
+        if (tokenAddresses.length != recipients.length || recipients.length != amounts.length) revert LengthMismatch();
+        if (tokenAddresses.length > maxRecipients) revert TooManyRecipients();
 
-        for (uint256 i = 0; i < tokenAddresses.length; ++i) {
-            require(tokenAddresses[i] != address(0), "Zero token address");
-            require(recipients[i] != address(0), "Zero recipient");
-            require(amounts[i] > 0, "Zero amount");
+        for (uint256 i = 0; i < tokenAddresses.length;) {
+            if (tokenAddresses[i] == address(0)) revert ZeroTokenAddress();
+            if (recipients[i] == address(0)) revert ZeroRecipient();
+            if (amounts[i] == 0) revert ZeroAmount();
             
             IERC20(tokenAddresses[i]).safeTransferFrom(
                 msg.sender,
                 recipients[i],
                 amounts[i]
             );
+            unchecked { ++i; }
         }
 
         bytes32 batchHash = _computeHash(
@@ -505,17 +518,9 @@ contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
         address[] calldata ethRecipients,
         uint256[] calldata ethAmounts
     ) internal view {
-        require(
-            tokenAddresses.length == tokenRecipients.length &&
-            tokenAddresses.length == tokenAmounts.length,
-            "Token arrays mismatch"
-        );
-        require(ethRecipients.length == ethAmounts.length, "ETH arrays mismatch");
-        require(
-            ethRecipients.length <= maxRecipients &&
-            tokenAddresses.length <= maxRecipients,
-            "Too many items"
-        );
+        if (tokenAddresses.length != tokenRecipients.length || tokenAddresses.length != tokenAmounts.length) revert TokenArraysMismatch();
+        if (ethRecipients.length != ethAmounts.length) revert EthArraysMismatch();
+        if (ethRecipients.length > maxRecipients || tokenAddresses.length > maxRecipients) revert TooManyRecipients();
     }
 
     /**
@@ -530,19 +535,21 @@ contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
         uint256[] calldata amounts
     ) internal returns (uint256 totalEth) {
         if (recipients.length == 0) {
-            require(msg.value == 0, "ETH sent but no recipients");
+            if (msg.value != 0) revert IncorrectMsgValue();
             return 0;
         }
 
-        for (uint256 i = 0; i < amounts.length; ++i) {
-            require(recipients[i] != address(0), "Zero ETH recipient");
-            require(amounts[i] > 0, "Zero ETH amount");
+        for (uint256 i = 0; i < amounts.length;) {
+            if (recipients[i] == address(0)) revert ZeroRecipient();
+            if (amounts[i] == 0) revert ZeroAmount();
             totalEth += amounts[i];
+            unchecked { ++i; }
         }
-        require(msg.value == totalEth, "Incorrect ETH sent");
+        if (msg.value != totalEth) revert IncorrectMsgValue();
 
-        for (uint256 i = 0; i < recipients.length; ++i) {
+        for (uint256 i = 0; i < recipients.length;) {
             Address.sendValue(payable(recipients[i]), amounts[i]);
+            unchecked { ++i; }
         }
     }
 
@@ -558,16 +565,17 @@ contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
         address[] calldata recipients,
         uint256[] calldata amounts
     ) internal {
-        for (uint256 i = 0; i < tokenAddresses.length; ++i) {
-            require(tokenAddresses[i] != address(0), "Zero token address");
-            require(recipients[i] != address(0), "Zero token recipient");
-            require(amounts[i] > 0, "Zero token amount");
+        for (uint256 i = 0; i < tokenAddresses.length;) {
+            if (tokenAddresses[i] == address(0)) revert ZeroTokenAddress();
+            if (recipients[i] == address(0)) revert ZeroRecipient();
+            if (amounts[i] == 0) revert ZeroAmount();
             
             IERC20(tokenAddresses[i]).safeTransferFrom(
                 msg.sender,
                 recipients[i],
                 amounts[i]
             );
+            unchecked { ++i; }
         }
     }
 
@@ -607,8 +615,8 @@ contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
         address to,
         uint256 amount
     ) external onlyOwner {
-        require(tokenAddress != address(0), "Zero token address");
-        require(to != address(0), "Zero recipient");
+        if (tokenAddress == address(0)) revert ZeroTokenAddress();
+        if (to == address(0)) revert ZeroRecipient();
         IERC20(tokenAddress).safeTransfer(to, amount);
     }
 
@@ -626,7 +634,7 @@ contract BatchTransferContract is ReentrancyGuard, Ownable, Pausable {
      * @custom:security Owner only, cannot be used to steal user funds as contract doesn't hold user funds
      */
     function emergencyWithdrawEth(address payable to, uint256 amount) external onlyOwner {
-        require(to != address(0), "Zero recipient");
+        if (to == address(0)) revert ZeroRecipient();
         Address.sendValue(to, amount);
     }
 }
