@@ -7,7 +7,7 @@ export function CombinedTransferPage() {
   const { address } = useParams<{ address: string }>();
   
   return (
-    <FunctionPage title="Combined Transfer">
+    <FunctionPage title="Combined Transfer" maxWidth="max-w-7xl" isCard={false}>
         <BatchTransferCombinedForm contractAddress={address as Address} />
     </FunctionPage>
   );

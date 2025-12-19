@@ -7,7 +7,7 @@ export function TransferTokenPage() {
   const { address } = useParams<{ address: string }>();
   
   return (
-    <FunctionPage title="Transfer Token" maxWidth="max-w-5xl" isCard={false}>
+    <FunctionPage title="Transfer Token" maxWidth="max-w-7xl" isCard={false}>
         <BatchTransferTokenForm contractAddress={address as Address} />
     </FunctionPage>
   );

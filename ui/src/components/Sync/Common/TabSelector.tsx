@@ -11,7 +11,7 @@ export function TabSelector({ activeTab, onTabChange }: TabSelectorProps) {
   const tabs: TabType[] = ['manual', 'upload'];
 
   return (
-    <div className="border-b border-white/10 flex">
+    <div className="w-full border-b border-white/10 flex">
       {tabs.map((tab) => (
         <button
           key={tab}

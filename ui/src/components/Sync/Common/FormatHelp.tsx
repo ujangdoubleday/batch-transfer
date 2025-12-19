@@ -7,6 +7,7 @@ interface FormatHelpProps {
   activeTab: TabType;
   showHelp: boolean;
   onToggleHelp: () => void;
+  isCombined?: boolean;
 }
 
 const JSON_EXAMPLE = `[
@@ -24,14 +25,40 @@ const CSV_EXAMPLE = `recipient,amount
 0x101010171D3E2d1f3DcAa07b7C1B89C7d5D63Fb2,1.5
 0x...,0.5`;
 
-export function FormatHelp({ activeTab, showHelp, onToggleHelp }: FormatHelpProps) {
+const COMBINED_JSON_EXAMPLE = `{
+  "tokens": [
+    {
+      "token": "0xTokenAddress...",
+      "recipient": "0xRecipient...",
+      "amount": "100"
+    }
+  ],
+  "eth": [
+    {
+      "recipient": "0xRecipient...",
+      "amount": "0.5"
+    }
+  ]
+}`;
+
+const COMBINED_CSV_EXAMPLE = `type, token_address, recipient, amount
+token, 0xToken..., 0xUser1..., 100
+eth, , 0xUser2..., 0.5`;
+
+export function FormatHelp({ activeTab, showHelp, onToggleHelp, isCombined }: FormatHelpProps) {
   const [copiedJSON, setCopiedJSON] = useState(false);
   const [copiedCSV, setCopiedCSV] = useState(false);
 
   if (activeTab === 'manual') return null;
 
   const handleCopy = (type: 'json' | 'csv') => {
-    const text = type === 'json' ? JSON_EXAMPLE : CSV_EXAMPLE;
+    let text = '';
+    if (isCombined) {
+        text = type === 'json' ? COMBINED_JSON_EXAMPLE : COMBINED_CSV_EXAMPLE;
+    } else {
+        text = type === 'json' ? JSON_EXAMPLE : CSV_EXAMPLE;
+    }
+    
     navigator.clipboard.writeText(text);
     if (type === 'json') {
       setCopiedJSON(true);
@@ -60,6 +87,9 @@ export function FormatHelp({ activeTab, showHelp, onToggleHelp }: FormatHelpProp
     </button>
   );
 
+  const jsonContent = isCombined ? COMBINED_JSON_EXAMPLE : JSON_EXAMPLE;
+  const csvContent = isCombined ? COMBINED_CSV_EXAMPLE : CSV_EXAMPLE;
+
   return (
     <>
       <div className="flex justify-end">
@@ -83,15 +113,19 @@ export function FormatHelp({ activeTab, showHelp, onToggleHelp }: FormatHelpProp
       {showHelp && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-200">
           <div className="relative group bg-zinc-900/50 border border-white/5 rounded-xl p-6 overflow-hidden">
-             <div className="absolute top-4 left-4 text-[10px] font-bold text-zinc-600 uppercase tracking-wider">JSON Format</div>
+             <div className="absolute top-4 left-4 text-[10px] font-bold text-zinc-600 uppercase tracking-wider">
+                {isCombined ? 'Combined JSON Format' : 'JSON Format'}
+             </div>
              {renderCopyButton('json', copiedJSON)}
-             <pre className="text-xs font-mono text-zinc-400 overflow-x-auto mt-6">{JSON_EXAMPLE}</pre>
+             <pre className="text-xs font-mono text-zinc-400 overflow-x-auto mt-6">{jsonContent}</pre>
           </div>
 
           <div className="relative group bg-zinc-900/50 border border-white/5 rounded-xl p-6 overflow-hidden">
-             <div className="absolute top-4 left-4 text-[10px] font-bold text-zinc-600 uppercase tracking-wider">CSV Format</div>
+             <div className="absolute top-4 left-4 text-[10px] font-bold text-zinc-600 uppercase tracking-wider">
+                {isCombined ? 'Combined CSV Format' : 'CSV Format'}
+             </div>
              {renderCopyButton('csv', copiedCSV)}
-             <pre className="text-xs font-mono text-zinc-400 overflow-x-auto mt-6">{CSV_EXAMPLE}</pre>
+             <pre className="text-xs font-mono text-zinc-400 overflow-x-auto mt-6">{csvContent}</pre>
           </div>
         </div>
       )}
