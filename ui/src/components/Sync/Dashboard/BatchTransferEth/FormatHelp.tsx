@@ -11,7 +11,7 @@ interface FormatHelpProps {
 
 const JSON_EXAMPLE = `[
   {
-    "recipient": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    "recipient": "0x101010171D3E2d1f3DcAa07b7C1B89C7d5D63Fb2",
     "amount": "1.5"
   },
   {
@@ -21,7 +21,7 @@ const JSON_EXAMPLE = `[
 ]`;
 
 const CSV_EXAMPLE = `recipient,amount
-0x742d35Cc6634C0532925a3b844Bc454e4438f44e,1.5
+0x101010171D3E2d1f3DcAa07b7C1B89C7d5D63Fb2,1.5
 0x...,0.5`;
 
 export function FormatHelp({ activeTab, showHelp, onToggleHelp }: FormatHelpProps) {
