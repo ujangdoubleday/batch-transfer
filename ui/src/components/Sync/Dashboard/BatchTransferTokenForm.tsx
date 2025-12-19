@@ -344,7 +344,7 @@ export function BatchTransferTokenForm({ contractAddress }: Props) {
   const showSummary = executionHistory.length > 0 && executionHistory.length === totalBatches && !isProcessing;
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
+    <div className="w-full mx-auto">
       <div className="bg-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
         
         {showSummary ? (

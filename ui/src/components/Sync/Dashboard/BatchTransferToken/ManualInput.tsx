@@ -7,7 +7,7 @@ interface ManualInputProps {
 
 export function ManualInput({ recipients, setRecipients, amounts, setAmounts }: ManualInputProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="space-y-4">
         <label className="block text-xs uppercase tracking-wider text-zinc-500 font-semibold">Recipients</label>
         <textarea
