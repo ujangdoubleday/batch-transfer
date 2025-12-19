@@ -1,5 +1,3 @@
-
-
 interface Props {
   currentBatch: number;
   totalBatches: number;
@@ -9,16 +7,6 @@ interface Props {
 }
 
 export function BatchProgress({ currentBatch, totalBatches, isConfirming, txHash, explorerUrl }: Props) {
-  // Calculate percentage
-  // If we are on batch 1 of 2, and just started: 0%? No, let's say "Processing Batch 1".
-  // Let's make it granular.
-  // Completed batches = currentBatch - 1.
-  // Current batch progress = depends on state. but let's just do steps.
-  
-  // Calculate percentage
-  // If we are on batch 1 of 2, and just started: 0%? No, let's say "Processing Batch 1".
-  
-  // Let's boost it slightly so it's not 0% when starting batch 1.
   const visualProgress = Math.max(5, Math.round(((currentBatch - 0.5) / totalBatches) * 100));
 
   return (

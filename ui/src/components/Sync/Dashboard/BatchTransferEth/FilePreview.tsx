@@ -20,13 +20,7 @@ export function FilePreview({ recipients, amounts, decimals, maxRecipients, file
   let totalAmount = 0n;
   try {
     amountList.map(a => BigInt(Math.floor(Number(a.trim()) * (10 ** Number(decimals)))));
-    // Note: The input 'amounts' string usually comes from the parser which might keep them as human readable strings
-    // But here we need to be careful. The parser in the parent component currently converts to string.
-    // Let's re-parse simply for display:
     totalAmount = amountList.reduce((acc, curr) => {
-        // Simple approximation for display if they are distinct strings, 
-        // but robustly we should probably sum the BigInts if available.
-        // Given Props pass strings:
         return acc + BigInt(Math.floor(parseFloat(curr) * (10 ** Number(decimals))));
     }, 0n);
   } catch (e) {
