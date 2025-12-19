@@ -3,6 +3,7 @@ import { WalletConnectGuard } from '../../components/WalletConnectGuard';
 import { DashboardLayout } from '../../components/Sync/Layout/DashboardLayout';
 import { FunctionCard } from '../../components/Sync/Common/FunctionCard';
 import { useBatchTransfer } from '../../hooks/useBatchTransfer';
+import { AdminGuard } from '../../components/AdminGuard';
 import type { Address } from 'viem';
 
 // Icons
@@ -106,13 +107,15 @@ export function SyncAddress() {
                 to={`/sync/${address}/multi-token-transfer`}
             />
 
-            <FunctionCard 
-                title="Admin Controls" 
-                description="Manage contract settings and emergency functions."
-                icon={<AdminIcon />}
-                to={`/sync/${address}/admin`}
-                className="border-red-900/20 hover:border-red-900/40"
-            />
+            <AdminGuard fallback={null}>
+                <FunctionCard 
+                    title="Admin Controls" 
+                    description="Manage contract settings and emergency functions."
+                    icon={<AdminIcon />}
+                    to={`/sync/${address}/admin`}
+                    className="border-red-900/20 hover:border-red-900/40"
+                />
+            </AdminGuard>
         </div>
       </DashboardLayout>
     </WalletConnectGuard>

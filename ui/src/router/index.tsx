@@ -11,6 +11,8 @@ import { CombinedTransferPage } from '../views/sync/functions/CombinedTransferPa
 import { MultiTokenTransferPage } from '../views/sync/functions/MultiTokenTransferPage'
 import { AdminPage } from '../views/sync/functions/AdminPage'
 import { VerificationGuard } from '../components/VerificationGuard'
+import { AdminGuard } from '../components/AdminGuard'
+import { AdminForbidden } from '../components/AdminForbidden'
 
 export function AppRouter() {
   return (
@@ -53,7 +55,9 @@ export function AppRouter() {
 
           <Route path="sync/:address/admin" element={
             <VerificationGuard>
-              <AdminPage />
+              <AdminGuard fallback={<AdminForbidden />}>
+                <AdminPage />
+              </AdminGuard>
             </VerificationGuard>
           } />
 
