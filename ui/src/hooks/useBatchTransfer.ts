@@ -21,7 +21,7 @@ type ContractFunctionName =
   | 'emergencyWithdrawToken';
 
 export function useBatchTransfer(address: Address) {
-  const { data: hash, writeContract, isPending, error: writeError } = useWriteContract();
+  const { data: hash, writeContract, writeContractAsync, isPending, error: writeError } = useWriteContract();
   
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
@@ -46,8 +46,19 @@ export function useBatchTransfer(address: Address) {
     });
   };
 
+  const writeAsync = async (functionName: ContractFunctionName, args: any[], value?: bigint) => {
+    return await writeContractAsync({
+      address,
+      abi: BatchTransferABI.abi,
+      functionName,
+      args,
+      value,
+    });
+  };
+
   return {
     write,
+    writeAsync,
     hash,
     isPending,
     isConfirming,
