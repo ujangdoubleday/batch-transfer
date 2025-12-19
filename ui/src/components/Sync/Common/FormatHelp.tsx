@@ -45,7 +45,25 @@ const COMBINED_CSV_EXAMPLE = `type, token_address, recipient, amount
 token, 0xToken..., 0xUser1..., 100
 eth, , 0xUser2..., 0.5`;
 
-export function FormatHelp({ activeTab, showHelp, onToggleHelp, isCombined }: FormatHelpProps) {
+
+const MULTI_TOKEN_JSON_EXAMPLE = `[
+  {
+    "token": "0xTokenAddress...",
+    "recipient": "0xRecipient...",
+    "amount": "100.5"
+  },
+  {
+    "token": "0xAnotherToken...",
+    "recipient": "0xAnotherRecipient...",
+    "amount": "50"
+  }
+]`;
+
+const MULTI_TOKEN_CSV_EXAMPLE = `token,recipient,amount
+0xTokenAddress...,0xRecipient...,100.5
+0xAnotherToken...,0xAnotherRecipient...,50`;
+
+export function FormatHelp({ activeTab, showHelp, onToggleHelp, isCombined, isMultiToken }: FormatHelpProps & { isMultiToken?: boolean }) {
   const [copiedJSON, setCopiedJSON] = useState(false);
   const [copiedCSV, setCopiedCSV] = useState(false);
 
@@ -55,6 +73,8 @@ export function FormatHelp({ activeTab, showHelp, onToggleHelp, isCombined }: Fo
     let text = '';
     if (isCombined) {
         text = type === 'json' ? COMBINED_JSON_EXAMPLE : COMBINED_CSV_EXAMPLE;
+    } else if (isMultiToken) {
+        text = type === 'json' ? MULTI_TOKEN_JSON_EXAMPLE : MULTI_TOKEN_CSV_EXAMPLE;
     } else {
         text = type === 'json' ? JSON_EXAMPLE : CSV_EXAMPLE;
     }
@@ -71,6 +91,7 @@ export function FormatHelp({ activeTab, showHelp, onToggleHelp, isCombined }: Fo
 
   const renderCopyButton = (type: 'json' | 'csv', copied: boolean) => (
     <button
+      type="button"
       onClick={() => handleCopy(type)}
       className="absolute top-4 right-4 p-2 bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-all border border-zinc-700 hover:border-zinc-500 z-10"
       title="Copy to clipboard"
@@ -87,8 +108,19 @@ export function FormatHelp({ activeTab, showHelp, onToggleHelp, isCombined }: Fo
     </button>
   );
 
-  const jsonContent = isCombined ? COMBINED_JSON_EXAMPLE : JSON_EXAMPLE;
-  const csvContent = isCombined ? COMBINED_CSV_EXAMPLE : CSV_EXAMPLE;
+  let jsonContent = JSON_EXAMPLE;
+  let csvContent = CSV_EXAMPLE;
+  let labelPrefix = '';
+
+  if (isCombined) {
+      jsonContent = COMBINED_JSON_EXAMPLE;
+      csvContent = COMBINED_CSV_EXAMPLE;
+      labelPrefix = 'Combined ';
+  } else if (isMultiToken) {
+      jsonContent = MULTI_TOKEN_JSON_EXAMPLE;
+      csvContent = MULTI_TOKEN_CSV_EXAMPLE;
+      labelPrefix = 'Multi-Token ';
+  }
 
   return (
     <>
@@ -114,7 +146,7 @@ export function FormatHelp({ activeTab, showHelp, onToggleHelp, isCombined }: Fo
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-200">
           <div className="relative group bg-zinc-900/50 border border-white/5 rounded-xl p-6 overflow-hidden">
              <div className="absolute top-4 left-4 text-[10px] font-bold text-zinc-600 uppercase tracking-wider">
-                {isCombined ? 'Combined JSON Format' : 'JSON Format'}
+                {labelPrefix}JSON Format
              </div>
              {renderCopyButton('json', copiedJSON)}
              <pre className="text-xs font-mono text-zinc-400 overflow-x-auto mt-6">{jsonContent}</pre>
@@ -122,7 +154,7 @@ export function FormatHelp({ activeTab, showHelp, onToggleHelp, isCombined }: Fo
 
           <div className="relative group bg-zinc-900/50 border border-white/5 rounded-xl p-6 overflow-hidden">
              <div className="absolute top-4 left-4 text-[10px] font-bold text-zinc-600 uppercase tracking-wider">
-                {isCombined ? 'Combined CSV Format' : 'CSV Format'}
+                {labelPrefix}CSV Format
              </div>
              {renderCopyButton('csv', copiedCSV)}
              <pre className="text-xs font-mono text-zinc-400 overflow-x-auto mt-6">{csvContent}</pre>
