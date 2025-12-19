@@ -2,13 +2,16 @@ import type { ReactNode } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout } from './DashboardLayout';
 import { WalletConnectGuard } from '../../WalletConnectGuard';
+import { cn } from '../../../lib/utils';
 
 interface FunctionPageProps {
   title: string;
   children: ReactNode;
+  maxWidth?: string;
+  isCard?: boolean;
 }
 
-export function FunctionPage({ title, children }: FunctionPageProps) {
+export function FunctionPage({ title, children, maxWidth = "max-w-2xl", isCard = true }: FunctionPageProps) {
   const { address } = useParams<{ address: string }>();
 
   const header = (
@@ -31,7 +34,11 @@ export function FunctionPage({ title, children }: FunctionPageProps) {
   return (
     <WalletConnectGuard>
          <DashboardLayout header={header}>
-            <div className="w-full max-w-2xl mx-auto bg-zinc-900 border border-zinc-800 rounded-2xl p-6 md:p-8">
+            <div className={cn(
+                "w-full mx-auto",
+                maxWidth,
+                isCard && "bg-zinc-900 border border-zinc-800 rounded-2xl p-6 md:p-8"
+            )}>
                 {children}
             </div>
         </DashboardLayout>

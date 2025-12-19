@@ -7,7 +7,7 @@ export function TransferEthPage() {
   const { address } = useParams<{ address: string }>();
   
   return (
-    <FunctionPage title="Transfer ETH">
+    <FunctionPage title="Transfer ETH" maxWidth="max-w-5xl" isCard={false}>
         <BatchTransferEthForm contractAddress={address as Address} />
     </FunctionPage>
   );
