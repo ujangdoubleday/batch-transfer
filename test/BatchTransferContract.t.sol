@@ -57,10 +57,10 @@ contract BatchTransferContractTest is Test {
     }
 
     function test_SetMaxRecipients_RevertIfInvalid() public {
-        vm.expectRevert("Invalid max recipients");
+        vm.expectRevert(BatchTransferContract.InvalidMaxRecipients.selector);
         batchTransfer.setMaxRecipients(0);
 
-        vm.expectRevert("Invalid max recipients");
+        vm.expectRevert(BatchTransferContract.InvalidMaxRecipients.selector);
         batchTransfer.setMaxRecipients(501);
     }
 
@@ -101,7 +101,7 @@ contract BatchTransferContractTest is Test {
         recipients = [user1, user2];
         amounts = [1 ether];
 
-        vm.expectRevert("Length mismatch");
+        vm.expectRevert(BatchTransferContract.LengthMismatch.selector);
         batchTransfer.batchTransferEth{value: 1 ether}(recipients, amounts);
     }
 
@@ -109,7 +109,7 @@ contract BatchTransferContractTest is Test {
         recipients = [user1];
         amounts = [1 ether];
 
-        vm.expectRevert("Incorrect msg.value");
+        vm.expectRevert(BatchTransferContract.IncorrectMsgValue.selector);
         batchTransfer.batchTransferEth{value: 0.5 ether}(recipients, amounts);
     }
 
