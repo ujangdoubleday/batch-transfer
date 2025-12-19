@@ -21,7 +21,7 @@ export function AdminPage() {
   };
   
   return (
-    <FunctionPage title="Admin Controls">
+    <FunctionPage title="Admin Controls" maxWidth="max-w-7xl" isCard={false}>
         <AdminControls 
             contractAddress={contractAddress} 
             paused={!!paused} 
