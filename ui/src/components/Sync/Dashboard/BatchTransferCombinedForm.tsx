@@ -81,7 +81,7 @@ export function BatchTransferCombinedForm({ contractAddress }: Props) {
 
   // Calculate required approvals instantly when inputs change
   useEffect(() => {
-     let uniqueTokensMap = new Map<string, bigint>();
+     const uniqueTokensMap = new Map<string, bigint>();
 
      if (activeTab === 'manual') {
          const tAddrs = tokenAddresses.split(',').map(s => s.trim()).filter(Boolean);
@@ -156,11 +156,11 @@ export function BatchTransferCombinedForm({ contractAddress }: Props) {
                 batch.ethRecipients, batch.ethAmounts
             ], batch.totalEth);
             setCurrentTxHash(hash);
-          } catch (err: any) {
+          } catch (err: unknown) {
              console.error('Error processing batch:', err);
              setFeedback({
                type: 'error',
-               message: err.message || `Failed to process batch ${nextIndex + 1}`
+               message: err instanceof Error ? err.message : `Failed to process batch ${nextIndex + 1}`
              });
              setIsProcessing(false);
           }
@@ -283,9 +283,9 @@ export function BatchTransferCombinedForm({ contractAddress }: Props) {
       ], firstBatch.totalEth);
       setCurrentTxHash(hash);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("Preparation error:", err);
-        setFeedback({ type: 'error', message: err.message || "Failed to prepare transaction" });
+        setFeedback({ type: 'error', message: err instanceof Error ? err.message : "Failed to prepare transaction" });
         setIsProcessing(false);
     }
   };
@@ -310,8 +310,8 @@ export function BatchTransferCombinedForm({ contractAddress }: Props) {
                   throw new Error("Unsupported format");
               }
               setParsedData(data);
-          } catch (err: any) {
-              setParseError(err.message);
+          } catch (err: unknown) {
+              setParseError(err instanceof Error ? err.message : String(err));
           }
       };
       reader.readAsText(file);

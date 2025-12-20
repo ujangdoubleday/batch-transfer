@@ -5,8 +5,8 @@ export const parseJSON = (content: string): { recipients: string[], amounts: str
     const r: string[] = [];
     const a: string[] = [];
 
-    data.forEach((item: any) => {
-      if (item.recipient && item.amount) {
+    data.forEach((item: { recipient?: unknown; amount?: unknown }) => {
+      if (typeof item.recipient === 'string' && (typeof item.amount === 'string' || typeof item.amount === 'number')) {
         r.push(item.recipient);
         a.push(item.amount.toString());
       }
@@ -50,8 +50,8 @@ export const parseCombinedJSON = (content: string): CombinedTransferData => {
     const eth: { recipient: string; amount: string }[] = [];
 
     if (Array.isArray(data.tokens)) {
-        data.tokens.forEach((item: any) => {
-            if (item.token && item.recipient && item.amount) {
+        data.tokens.forEach((item: { token?: unknown; recipient?: unknown; amount?: unknown }) => {
+            if (typeof item.token === 'string' && typeof item.recipient === 'string' && (typeof item.amount === 'string' || typeof item.amount === 'number')) {
                 tokens.push({
                     token: item.token.trim(),
                     recipient: item.recipient.trim(),
@@ -62,8 +62,8 @@ export const parseCombinedJSON = (content: string): CombinedTransferData => {
     }
 
     if (Array.isArray(data.eth)) {
-        data.eth.forEach((item: any) => {
-            if (item.recipient && item.amount) {
+        data.eth.forEach((item: { recipient?: unknown; amount?: unknown }) => {
+            if (typeof item.recipient === 'string' && (typeof item.amount === 'string' || typeof item.amount === 'number')) {
                 eth.push({
                     recipient: item.recipient.trim(),
                     amount: item.amount.toString().trim()
@@ -145,15 +145,15 @@ export const parseMultiTokenJSON = (content: string): MultiTokenTransferData[] =
     let data;
     try {
         data = JSON.parse(content);
-    } catch (e) {
+    } catch {
         throw new Error("Invalid JSON format");
     }
 
     if (!Array.isArray(data)) throw new Error("JSON must be an array");
     
     const results: MultiTokenTransferData[] = [];
-    data.forEach((item: any) => {
-        if (item.token && item.recipient && item.amount) {
+    data.forEach((item: { token?: unknown; recipient?: unknown; amount?: unknown }) => {
+        if (typeof item.token === 'string' && typeof item.recipient === 'string' && (typeof item.amount === 'string' || typeof item.amount === 'number')) {
             results.push({
                 token: item.token.trim(),
                 recipient: item.recipient.trim(),
