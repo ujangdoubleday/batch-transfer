@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useBatchTransfer } from '../../../hooks/useBatchTransfer';
 import { useChainMetadata } from '../../../hooks/useChainMetadata';
 import { useAccount, useWaitForTransactionReceipt, useReadContract, useWriteContract } from 'wagmi';
@@ -84,16 +84,17 @@ export function BatchTransferTokenForm({ contractAddress }: Props) {
   const [isApproveWait, setIsApproveWait] = useState(false);
 
   // Prepare Data for Comparison
-  const getRecipientList = () => recipients.split(',').map(r => r.trim()).filter(Boolean);
-  const getAmountList = () => amounts.split(',').map(a => parseUnits(a.trim(), tokenDecimals));
-  const getTotalNeeded = () => {
+  // Prepare Data for Comparison
+  const getRecipientList = useCallback(() => recipients.split(',').map(r => r.trim()).filter(Boolean), [recipients]);
+  const getAmountList = useCallback(() => amounts.split(',').map(a => parseUnits(a.trim(), tokenDecimals)), [amounts, tokenDecimals]);
+  const getTotalNeeded = useCallback(() => {
       try {
         const list = getAmountList();
         return list.reduce((acc, curr) => acc + curr, 0n);
       } catch {
           return 0n;
       }
-  };
+  }, [getAmountList]);
 
   const totalNeeded = getTotalNeeded();
   const isApproved = !!allowance && allowance >= totalNeeded;
@@ -125,11 +126,11 @@ export function BatchTransferTokenForm({ contractAddress }: Props) {
             const functionName = useSimpleMode ? 'simpleBatchTransferToken' : 'batchTransferToken';
             const hash = await writeAsync(functionName, [tokenAddress, batch.recipients, batch.amounts]);
             setCurrentTxHash(hash);
-          } catch (err: any) {
+          } catch (err: unknown) {
             console.error('Error processing batch:', err);
             setFeedback({
               type: 'error',
-              message: err.message || `Failed to process batch ${nextIndex + 1}`
+              message: err instanceof Error ? err.message : `Failed to process batch ${nextIndex + 1}`
             });
             setIsProcessing(false);
           }
@@ -200,15 +201,16 @@ export function BatchTransferTokenForm({ contractAddress }: Props) {
       const hash = await writeAsync(functionName, [tokenAddress, firstBatch.recipients, firstBatch.amounts]);
       setCurrentTxHash(hash);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error preparing transaction:', err);
       setFeedback({
         type: 'error',
-        message: err.message || 'Failed to prepare transaction'
+        message: err instanceof Error ? err.message : 'Failed to prepare transaction'
       });
       setIsProcessing(false);
     }
-  }, [recipients, amounts, maxRecipients, useSimpleMode, writeAsync, tokenAddress, tokenDecimals]);
+
+  }, [getRecipientList, getAmountList, maxRecipients, useSimpleMode, writeAsync, tokenAddress]);
 
   const handleApprove = async () => {
       if (!tokenAddress) return;
@@ -227,11 +229,11 @@ export function BatchTransferTokenForm({ contractAddress }: Props) {
               hash: hash
           });
           
-      } catch (err: any) {
+      } catch (err: unknown) {
           console.error("Approval failed", err);
            setFeedback({
               type: 'error',
-              message: err.message || 'Approval failed'
+              message: err instanceof Error ? err.message : 'Approval failed'
           });
           setIsApproveWait(false);
       }
@@ -294,8 +296,8 @@ export function BatchTransferTokenForm({ contractAddress }: Props) {
         setRecipients(parsedData.recipients.join(', '));
         setAmounts(parsedData.amounts.join(', '));
 
-      } catch (err: any) {
-        setParseError(err.message || "Failed to parse file. Please check the format.");
+      } catch (err: unknown) {
+        setParseError(err instanceof Error ? err.message : "Failed to parse file. Please check the format.");
         console.error(err);
       }
     };

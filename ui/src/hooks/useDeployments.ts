@@ -11,7 +11,8 @@ export function useDeployments() {
   // Load deployments
   useEffect(() => {
     if (!chainId || !address) {
-      setDeployments([])
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDeployments(prev => prev.length === 0 ? prev : [])
       return
     }
 

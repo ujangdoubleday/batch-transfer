@@ -40,9 +40,10 @@ export function ConnectWallet({ isMobile = false }: ConnectWalletProps) {
   // Close modals if user connects/disconnects
   useEffect(() => {
     if (isConnected) {
-      setShowModal(false)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowModal(prev => prev ? false : prev)
     } else {
-      setShowDropdown(false)
+      setShowDropdown(prev => prev ? false : prev)
     }
   }, [isConnected])
 

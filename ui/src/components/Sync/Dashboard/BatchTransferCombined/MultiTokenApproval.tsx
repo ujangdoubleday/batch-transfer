@@ -42,8 +42,10 @@ export function MultiTokenApproval({ tokens, spenderAddress, onAllApproved }: Mu
 
   useEffect(() => {
     if (isConfirmed) {
-        setApprovingToken(null);
-        setCurrentHash(undefined);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setApprovingToken(prev => prev ? null : prev);
+
+        setCurrentHash(prev => prev ? undefined : prev);
         refetch();
     }
   }, [isConfirmed, refetch]);

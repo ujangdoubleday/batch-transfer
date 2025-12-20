@@ -55,20 +55,18 @@ export function AdminControls({ contractAddress, paused, owner, maxRecipients, r
   // Cleanup active action when loading finishes
   useEffect(() => {
     if (!isLoading) {
-        // Create a small delay to allow the 'success' effect to trigger first if needed
-        // or just let the success effect clear it. 
-        // Actually, if we just rely on isLoading, that's enough for the spinner.
-        // We set activeAction to null here to be safe.
         if (writeError) {
-             setActiveAction(null);
+             // eslint-disable-next-line react-hooks/set-state-in-effect
+             setActiveAction(prev => prev !== null ? null : prev);
         }
     }
   }, [isLoading, writeError]);
 
   // Handle Transaction Success
   useEffect(() => {
-    if (isConfirmed && hash) {
+    if (isConfirmed && hash && activeAction) {
         refetch();
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFeedback({
             type: 'success',
             message: 'Transaction confirmed successfully',
@@ -90,7 +88,7 @@ export function AdminControls({ contractAddress, paused, owner, maxRecipients, r
 
         return () => clearTimeout(timer);
     }
-  }, [isConfirmed, hash, refetch]);
+  }, [isConfirmed, hash, refetch, activeAction]);
 
   const handlePauseToggle = () => {
     setActiveAction('pause');
