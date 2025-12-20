@@ -19,41 +19,45 @@ This project includes a **Foundry**-based smart contract and a **React + TypeScr
   - `SafeERC20`: Handled non-standard ERC20 implementations.
 - **Gas Optimized**: Uses assembly for hashing and optimized loops.
 
+## Prerequisites
+
+- [Foundry](https://book.getfoundry.sh/getting-started/installation)
+- Node.js >= 22.19
+
 ## Getting Started
 
-### 1. Clone & Install
+### 1. Clone
 
 ```shell
 git clone git@github.com:ujangdoubleday/batch-transfer.git
 cd batch-transfer
-forge install
 ```
 
-### 2. Test
-
-Run the comprehensive test suite to ensure everything is working correctly:
+### 2. Install
 
 ```shell
-forge test
+make install
 ```
 
-### 3. Build
+### 3. Test
 
-Compile the smart contracts:
+Run the comprehensive test suite:
 
 ```shell
-forge build
+make test
 ```
 
-### 4. Frontend (UI)
+### 4. Build
 
-The project includes a React + TypeScript + Vite frontend located in the `ui/` directory. You can run all commands from the root directory.
-
-**Install Dependencies:**
+Compile the smart contracts and copy ABI:
 
 ```shell
-npm install
+make build
 ```
+
+### 5. Frontend (UI)
+
+The project includes a React + TypeScript + Vite frontend located in the `ui/` directory.
 
 **Run Development Server:**
 
@@ -64,8 +68,7 @@ npm run dev
 **Build & Preview:**
 
 ```shell
-npm run build
-npm run preview
+make run
 ```
 
 ## Deployment & Verification
