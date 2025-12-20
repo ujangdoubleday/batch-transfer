@@ -12,6 +12,7 @@ export function ImportAddressForm() {
   const { metadata } = useChainMetadata(chainId)
   const { addDeployment } = useDeployments()
   // Force public client to match current chainId
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const publicClient = usePublicClient({ chainId: chainId as any })
   
   const [addressInput, setAddressInput] = useState('')

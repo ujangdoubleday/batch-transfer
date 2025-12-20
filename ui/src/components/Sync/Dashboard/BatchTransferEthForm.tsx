@@ -88,11 +88,11 @@ export function BatchTransferEthForm({ contractAddress }: Props) {
             
             const hash = await writeAsync('batchTransferEth', [batch.recipients, batch.amounts], batch.totalEth);
             setCurrentTxHash(hash);
-          } catch (err: any) {
+          } catch (err: unknown) {
             console.error('Error processing batch:', err);
             setFeedback({
               type: 'error',
-              message: err.message || `Failed to process batch ${nextIndex + 1}`
+              message: err instanceof Error ? err.message : `Failed to process batch ${nextIndex + 1}`
             });
             setIsProcessing(false);
           }
@@ -169,11 +169,11 @@ export function BatchTransferEthForm({ contractAddress }: Props) {
       const hash = await writeAsync('batchTransferEth', [firstBatch.recipients, firstBatch.amounts], firstBatch.totalEth);
       setCurrentTxHash(hash);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error preparing transaction:', err);
       setFeedback({
         type: 'error',
-        message: err.message || 'Failed to prepare transaction'
+        message: err instanceof Error ? err.message : 'Failed to prepare transaction'
       });
       setIsProcessing(false);
     }
@@ -203,8 +203,8 @@ export function BatchTransferEthForm({ contractAddress }: Props) {
         setRecipients(parsedData.recipients.join(', '));
         setAmounts(parsedData.amounts.join(', '));
 
-      } catch (err: any) {
-        setParseError(err.message || "Failed to parse file. Please check the format.");
+      } catch (err: unknown) {
+        setParseError(err instanceof Error ? err.message : "Failed to parse file. Please check the format.");
         console.error(err);
       }
     };

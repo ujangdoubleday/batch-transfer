@@ -131,11 +131,11 @@ export function BatchTransferMultiTokensForm({ contractAddress }: Props) {
                 batch.tokens, batch.recipients, batch.amounts
             ]);
             setCurrentTxHash(hash);
-          } catch (err: any) {
+          } catch (err: unknown) {
              console.error('Error processing batch:', err);
              setFeedback({
                type: 'error',
-               message: err.message || `Failed to process batch ${nextIndex + 1}`
+               message: err instanceof Error ? err.message : `Failed to process batch ${nextIndex + 1}`
              });
              setIsProcessing(false);
           }
@@ -185,7 +185,7 @@ export function BatchTransferMultiTokensForm({ contractAddress }: Props) {
               rList.push(item.recipient);
               try {
                   aList.push(parseUnits(item.amount, Number(decimals)));
-              } catch (e) {
+              } catch {
                   throw new Error(`Invalid amount: ${item.amount}`);
               }
           });
@@ -216,8 +216,8 @@ export function BatchTransferMultiTokensForm({ contractAddress }: Props) {
       ]);
       setCurrentTxHash(hash);
 
-    } catch (err: any) {
-        setFeedback({ type: 'error', message: err.message || "Failed to prepare transaction" });
+    } catch (err: unknown) {
+        setFeedback({ type: 'error', message: err instanceof Error ? err.message : "Failed to prepare transaction" });
         setIsProcessing(false);
     }
   };
@@ -242,8 +242,8 @@ export function BatchTransferMultiTokensForm({ contractAddress }: Props) {
                   throw new Error("Unsupported format");
               }
               setParsedData(data);
-          } catch (err: any) {
-              setParseError(err.message);
+          } catch (err: unknown) {
+              setParseError(err instanceof Error ? err.message : String(err));
           }
       };
       reader.readAsText(file);

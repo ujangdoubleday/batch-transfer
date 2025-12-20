@@ -27,7 +27,7 @@ export function useBatchTransfer(address: Address) {
     hash,
   });
 
-  const useContractRead = (functionName: ContractFunctionName, args: any[] = []) => {
+  const useContractRead = (functionName: ContractFunctionName, args: unknown[] = []) => {
     return useReadContract({
       address,
       abi: BatchTransferABI.abi,
@@ -36,7 +36,7 @@ export function useBatchTransfer(address: Address) {
     });
   };
 
-  const write = (functionName: ContractFunctionName, args: any[], value?: bigint) => {
+  const write = (functionName: ContractFunctionName, args: unknown[], value?: bigint) => {
     writeContract({
       address,
       abi: BatchTransferABI.abi,
@@ -46,7 +46,7 @@ export function useBatchTransfer(address: Address) {
     });
   };
 
-  const writeAsync = async (functionName: ContractFunctionName, args: any[], value?: bigint) => {
+  const writeAsync = async (functionName: ContractFunctionName, args: unknown[], value?: bigint) => {
     return await writeContractAsync({
       address,
       abi: BatchTransferABI.abi,

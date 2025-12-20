@@ -23,7 +23,7 @@ export function FilePreview({ recipients, amounts, decimals, maxRecipients, file
     totalAmount = amountList.reduce((acc, curr) => {
         return acc + BigInt(Math.floor(parseFloat(curr) * (10 ** Number(decimals))));
     }, 0n);
-  } catch (e) {
+  } catch {
     // Fallback or ignore if parsing fails for preview
   }
 
